@@ -91,7 +91,7 @@
         .logo-3d {
             width: 50px;
             height: 50px;
-            background: url(LOGO.png) center/contain no-repeat;
+            background: url('LOGO.png') center/contain no-repeat;
         }
 
         .nav-menu {
@@ -270,12 +270,20 @@
             padding: 40px;
             border-radius: 20px;
             border: 1px solid rgba(56, 189, 248, 0.2);
-            transition: all 0.3s;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
         }
 
         .stack-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 40px rgba(14, 165, 233, 0.2);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(14, 165, 233, 0.3);
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .stack-item:active {
+            transform: translateY(-5px) scale(0.98);
+            transition: all 0.1s ease;
         }
 
         .stack-item h3 {
@@ -304,17 +312,47 @@
             border-radius: 20px;
             border: 1px solid rgba(56, 189, 248, 0.2);
             text-align: center;
-            transition: all 0.3s;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .grid-item:hover::before {
+            left: 100%;
         }
 
         .grid-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 40px rgba(14, 165, 233, 0.2);
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 60px rgba(14, 165, 233, 0.3);
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .grid-item:active {
+            transform: translateY(-5px) scale(1);
+            transition: all 0.1s ease;
         }
 
         .grid-icon {
             font-size: 48px;
             margin-bottom: 20px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .grid-item:hover .grid-icon {
+            transform: scale(1.2) rotate(10deg);
         }
 
         .grid-item h3 {
@@ -630,6 +668,16 @@
 
         // Model variables
         let model3D = null;
+        let currentSectionIndex = 0;
+        
+        // Different positions for each section - more dynamic movement
+        const modelPositions = [
+            { x: 8, y: 0, z: 0 },       // Hero - right side
+            { x: -8, y: 3, z: 2 },      // Applications - left side, high
+            { x: 9, y: -2, z: -1 },     // Benefits - right side, low
+            { x: -7, y: 2, z: 1 },      // Examples - left side, mid
+            { x: 0, y: 0, z: 3 }        // Final - center, closer
+        ];
 
         // Load GLB model
         const loader = new THREE.GLTFLoader();
@@ -654,8 +702,8 @@
                 model3D.position.x = 8;
                 model3D.position.y = 0;
                 
-                // Rotate to match the icon orientation (facing forward like the image)
-                model3D.rotation.set(0, 0, 0);
+                // Rotate to face directly front (looking at viewer)
+                model3D.rotation.set(0, Math.PI, 0); // Face front
                 
                 // Keep original materials
                 model3D.traverse((child) => {
@@ -674,9 +722,18 @@
             }
         );
 
-        // Animation loop - NO automatic rotation
+        // Animation loop - NO automatic rotation, but smooth position transitions
         function animate() {
             requestAnimationFrame(animate);
+            
+            // Smoothly move model to target position for current section
+            if (model3D) {
+                const targetPos = modelPositions[currentSectionIndex];
+                model3D.position.x += (targetPos.x - model3D.position.x) * 0.05;
+                model3D.position.y += (targetPos.y - model3D.position.y) * 0.05;
+                model3D.position.z += (targetPos.z - model3D.position.z) * 0.05;
+            }
+            
             renderer.render(scene, camera);
         }
 
@@ -696,17 +753,19 @@
                 navbar.classList.remove('scrolled');
             }
 
-            // Update progress dots
-            let currentSection = 0;
+            // Update progress dots and model position based on section
+            let newSectionIndex = 0;
             sections.forEach((section, index) => {
                 const rect = section.getBoundingClientRect();
                 if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
-                    currentSection = index;
+                    newSectionIndex = index;
                 }
             });
+            
+            currentSectionIndex = newSectionIndex;
 
             progressDots.forEach((dot, index) => {
-                if (index === currentSection) {
+                if (index === currentSectionIndex) {
                     dot.classList.add('active');
                 } else {
                     dot.classList.remove('active');
