@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How AI Can Help Solve Problems</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --blue-100: #e0f2fe;
+            --blue-200: #bae6fd;
+            --blue-300: #7dd3fc;
+            --blue-400: #38bdf8;
+            --blue-500: #0ea5e9;
+            --blue-600: #0284c7;
+            --blue-700: #0369a1;
+            --blue-800: #075985;
+            --blue-900: #0c4a6e;
+            --cyan-400: #22d3ee;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
+            color: #0c4a6e;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        #model-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        nav {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 40px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 60px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 8px 32px rgba(14, 165, 233, 0.15);
+            width: calc(100% - 100px);
+            max-width: 1100px;
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            backdrop-filter: blur(30px);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 12px 48px rgba(14, 165, 233, 0.2);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #0c4a6e;
+        }
+
+        .logo-3d {
+            width: 50px;
+            height: 50px;
+            background: url(LOGO.png) center/contain no-repeat;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 35px;
+            list-style: none;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #0369a1;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover {
+            color: #0ea5e9;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .login-btn {
+            padding: 8px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #0369a1;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            color: #0ea5e9;
+        }
+
+        .sign-in {
+            padding: 10px 26px;
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sign-in:hover {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 20px rgba(14, 165, 233, 0.4);
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 140px 80px 100px;
+            min-height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .hero-content {
+            flex: 1;
+            max-width: 600px;
+        }
+
+        .hero-3d {
+            flex: 1;
+            height: 600px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 72px;
+            font-weight: 700;
+            color: #0c4a6e;
+            line-height: 1.1;
+            margin-bottom: 30px;
+            letter-spacing: -2px;
+        }
+
+        .hero-description {
+            font-size: 20px;
+            line-height: 1.7;
+            color: #075985;
+            margin-bottom: 45px;
+        }
+
+        .cta-button {
+            padding: 18px 50px;
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            color: white;
+            border: none;
+            border-radius: 35px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(14, 165, 233, 0.5);
+        }
+
+        .section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px;
+            position: relative;
+        }
+
+        .section-content {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-subtitle {
+            font-size: 16px;
+            color: #0ea5e9;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-size: 48px;
+            font-weight: 700;
+            color: #0c4a6e;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+
+        .section-description {
+            font-size: 18px;
+            color: #075985;
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Stack Layout */
+        .stack-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .stack-item {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            transition: all 0.3s;
+        }
+
+        .stack-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(14, 165, 233, 0.2);
+        }
+
+        .stack-item h3 {
+            font-size: 28px;
+            color: #0c4a6e;
+            margin-bottom: 15px;
+        }
+
+        .stack-item p {
+            font-size: 16px;
+            color: #0284c7;
+            line-height: 1.7;
+        }
+
+        /* Grid Layout */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .grid-item {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .grid-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(14, 165, 233, 0.2);
+        }
+
+        .grid-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .grid-item h3 {
+            font-size: 24px;
+            color: #0c4a6e;
+            margin-bottom: 15px;
+        }
+
+        .grid-item p {
+            font-size: 16px;
+            color: #0284c7;
+            line-height: 1.7;
+        }
+
+        /* Data Layout */
+        .data-layout {
+            display: flex;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .data-sidebar {
+            flex: 0 0 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .data-tab {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #0369a1;
+        }
+
+        .data-tab.active {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: #38bdf8;
+            color: #0c4a6e;
+        }
+
+        .data-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .scroll-progress {
+            position: fixed;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(56, 189, 248, 0.3);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .progress-dot.active {
+            background: #0ea5e9;
+            transform: scale(1.5);
+        }
+
+        @media (max-width: 1024px) {
+            .hero {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .hero-3d {
+                display: none;
+            }
+
+            h1 {
+                font-size: 48px;
+            }
+
+            .data-layout {
+                flex-direction: column;
+            }
+
+            .data-sidebar {
+                flex-direction: row;
+                flex: 1;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                width: calc(100% - 40px);
+                padding: 12px 20px;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .section {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="model-canvas"></canvas>
+
+    <nav id="navbar">
+        <div class="logo">
+            <div class="logo-3d"></div>
+            <span>AI Solutions</span>
+        </div>
+        <ul class="nav-menu">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#applications">Applications</a></li>
+            <li><a href="#benefits">Benefits</a></li>
+            <li><a href="#examples">Examples</a></li>
+        </ul>
+        <div class="nav-buttons">
+            <button class="login-btn">Login</button>
+            <button class="sign-in">Get Started</button>
+        </div>
+    </nav>
+
+    <div class="scroll-progress" id="scrollProgress">
+        <div class="progress-dot active" data-section="0"></div>
+        <div class="progress-dot" data-section="1"></div>
+        <div class="progress-dot" data-section="2"></div>
+        <div class="progress-dot" data-section="3"></div>
+        <div class="progress-dot" data-section="4"></div>
+    </div>
+
+    <div class="content">
+        <!-- Hero Section -->
+        <section class="hero" id="home">
+            <div class="hero-content">
+                <h1>How AI Can Help Humans Solve Problems</h1>
+                <p class="hero-description">
+                    Discover how artificial intelligence transforms complex challenges into actionable solutions, 
+                    empowering humans to make better decisions and solve problems faster than ever before.
+                </p>
+                <button class="cta-button">Explore AI Solutions</button>
+            </div>
+            <div class="hero-3d" id="hero-3d"></div>
+        </section>
+
+        <!-- Stack Layout Section -->
+        <section class="section" id="applications">
+            <div class="section-content">
+                <div class="section-header">
+                    <div class="section-subtitle">Problem-Solving Applications</div>
+                    <h2 class="section-title">AI-Powered Solutions</h2>
+                    <p class="section-description">
+                        Artificial intelligence provides innovative approaches to tackle complex problems across various domains
+                    </p>
+                </div>
+                <div class="stack-layout">
+                    <div class="stack-item">
+                        <h3>🔍 Pattern Recognition</h3>
+                        <p>AI identifies hidden patterns in massive datasets that humans might miss, enabling early detection of issues and opportunities in healthcare, finance, and research.</p>
+                    </div>
+                    <div class="stack-item">
+                        <h3>⚡ Real-Time Decision Making</h3>
+                        <p>Process complex information instantly to provide data-driven recommendations, helping professionals make faster, more accurate decisions in critical situations.</p>
+                    </div>
+                    <div class="stack-item">
+                        <h3>🎯 Predictive Analysis</h3>
+                        <p>Forecast future trends and outcomes based on historical data, allowing organizations to proactively address problems before they escalate.</p>
+                    </div>
+                    <div class="stack-item">
+                        <h3>🤖 Automation of Repetitive Tasks</h3>
+                        <p>Free human minds from mundane tasks, allowing them to focus on creative problem-solving and strategic thinking that requires human insight.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grid Layout Section -->
+        <section class="section" id="benefits">
+            <div class="section-content">
+                <div class="section-header">
+                    <div class="section-subtitle">Key Benefits</div>
+                    <h2 class="section-title">Why AI Excels at Problem Solving</h2>
+                    <p class="section-description">
+                        Understanding the unique advantages AI brings to human problem-solving efforts
+                    </p>
+                </div>
+                <div class="grid-layout">
+                    <div class="grid-item">
+                        <div class="grid-icon">🚀</div>
+                        <h3>Speed</h3>
+                        <p>Analyze millions of data points in seconds, accelerating problem identification and solution development exponentially</p>
+                    </div>
+                    <div class="grid-item">
+                        <div class="grid-icon">🎓</div>
+                        <h3>Learning</h3>
+                        <p>Continuously improve from experience, becoming more effective at solving similar problems over time</p>
+                    </div>
+                    <div class="grid-item">
+                        <div class="grid-icon">📊</div>
+                        <h3>Accuracy</h3>
+                        <p>Reduce human error in complex calculations and data analysis, providing more reliable solutions</p>
+                    </div>
+                    <div class="grid-item">
+                        <div class="grid-icon">🔄</div>
+                        <h3>Scalability</h3>
+                        <p>Handle increasing volumes of problems simultaneously without degradation in performance</p>
+                    </div>
+                    <div class="grid-item">
+                        <div class="grid-icon">💡</div>
+                        <h3>Innovation</h3>
+                        <p>Discover novel solutions by exploring possibilities beyond traditional human thinking patterns</p>
+                    </div>
+                    <div class="grid-item">
+                        <div class="grid-icon">🌐</div>
+                        <h3>Accessibility</h3>
+                        <p>Democratize expert-level problem-solving capabilities, making them available to more people</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Layout Section -->
+        <section class="section" id="examples">
+            <div class="section-content">
+                <div class="section-header">
+                    <div class="section-subtitle">Real-World Examples</div>
+                    <h2 class="section-title">AI in Action</h2>
+                    <p class="section-description">
+                        Explore how AI is solving real problems across different industries
+                    </p>
+                </div>
+                <div class="data-layout">
+                    <div class="data-sidebar">
+                        <div class="data-tab active" data-content="healthcare">Healthcare</div>
+                        <div class="data-tab" data-content="climate">Climate</div>
+                        <div class="data-tab" data-content="education">Education</div>
+                        <div class="data-tab" data-content="business">Business</div>
+                    </div>
+                    <div class="data-content" id="data-content">
+                        <h3>Healthcare Solutions</h3>
+                        <p style="margin-bottom: 20px;">AI is revolutionizing medical diagnosis and treatment:</p>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="padding: 15px 0; border-bottom: 1px solid rgba(56, 189, 248, 0.2);">
+                                <strong>Early Disease Detection:</strong> AI algorithms analyze medical images to detect cancer, heart disease, and other conditions earlier than traditional methods
+                            </li>
+                            <li style="padding: 15px 0; border-bottom: 1px solid rgba(56, 189, 248, 0.2);">
+                                <strong>Drug Discovery:</strong> Machine learning accelerates the identification of potential new medications, reducing development time from years to months
+                            </li>
+                            <li style="padding: 15px 0; border-bottom: 1px solid rgba(56, 189, 248, 0.2);">
+                                <strong>Personalized Treatment:</strong> AI analyzes patient data to recommend customized treatment plans based on individual genetic profiles and medical history
+                            </li>
+                            <li style="padding: 15px 0;">
+                                <strong>Resource Optimization:</strong> Predictive models help hospitals manage staff, equipment, and bed allocation more efficiently
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA Section -->
+        <section class="section">
+            <div class="section-content" style="text-align: center;">
+                <h2 class="section-title" style="margin-bottom: 30px;">Ready to Solve Problems with AI?</h2>
+                <p class="section-description" style="margin-bottom: 40px;">
+                    Join thousands of professionals leveraging AI to tackle their biggest challenges
+                </p>
+                <button class="cta-button">Start Your AI Journey</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Three.js Setup
+        const canvas = document.getElementById('model-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        camera.position.set(0, 0, 25);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0x38bdf8, 2, 50);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0x0ea5e9, 2, 50);
+        pointLight2.position.set(-10, -10, 10);
+        scene.add(pointLight2);
+
+        // Model variables
+        let model3D = null;
+
+        // Load GLB model
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+            '/model.glb',
+            (gltf) => {
+                console.log('Model loaded successfully!');
+                model3D = gltf.scene;
+                
+                // Center the model
+                const box = new THREE.Box3().setFromObject(model3D);
+                const center = box.getCenter(new THREE.Vector3());
+                model3D.position.sub(center);
+                
+                // Make it 3x bigger
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const scale = 18 / maxDim; // 3x bigger than before (was 6)
+                model3D.scale.set(scale, scale, scale);
+                
+                // Position on the right side
+                model3D.position.x = 8;
+                model3D.position.y = 0;
+                
+                // Rotate to match the icon orientation (facing forward like the image)
+                model3D.rotation.set(0, 0, 0);
+                
+                // Keep original materials
+                model3D.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material.needsUpdate = true;
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                
+                scene.add(model3D);
+            },
+            undefined,
+            (error) => {
+                console.error('Error loading model:', error);
+            }
+        );
+
+        // Animation loop - NO automatic rotation
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Scroll handling
+        const sections = document.querySelectorAll('.section');
+        const progressDots = document.querySelectorAll('.progress-dot');
+        const navbar = document.getElementById('navbar');
+
+        function updateScroll() {
+            const scrollPosition = window.scrollY;
+            
+            if (scrollPosition > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+
+            // Update progress dots
+            let currentSection = 0;
+            sections.forEach((section, index) => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+                    currentSection = index;
+                }
+            });
+
+            progressDots.forEach((dot, index) => {
+                if (index === currentSection) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateScroll);
+        window.addEventListener('load', updateScroll);
+
+        // Progress dots navigation
+        progressDots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                sections[index].scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Data tabs
+        const dataTabs = document.querySelectorAll('.data-tab');
+        const dataContent = document.getElementById('data-content');
+
+        const contentData = {
+            healthcare: {
+                title: 'Healthcare Solutions',
+                items: [
+                    { title: 'Early Disease Detection', desc: 'AI algorithms analyze medical images to detect cancer, heart disease, and other conditions earlier than traditional methods' },
+                    { title: 'Drug Discovery', desc: 'Machine learning accelerates the identification of potential new medications, reducing development time from years to months' },
+                    { title: 'Personalized Treatment', desc: 'AI analyzes patient data to recommend customized treatment plans based on individual genetic profiles and medical history' },
+                    { title: 'Resource Optimization', desc: 'Predictive models help hospitals manage staff, equipment, and bed allocation more efficiently' }
+                ]
+            },
+            climate: {
+                title: 'Climate Change Solutions',
+                items: [
+                    { title: 'Weather Prediction', desc: 'Advanced AI models provide more accurate weather forecasts and early warning systems for natural disasters' },
+                    { title: 'Energy Optimization', desc: 'Smart grids use AI to balance renewable energy sources and reduce carbon emissions efficiently' },
+                    { title: 'Deforestation Monitoring', desc: 'Satellite imagery analysis helps track and prevent illegal logging in real-time across vast forest areas' },
+                    { title: 'Carbon Capture', desc: 'AI optimizes carbon capture technologies and identifies the most effective locations for implementation' }
+                ]
+            },
+            education: {
+                title: 'Education Solutions',
+                items: [
+                    { title: 'Personalized Learning', desc: 'Adaptive learning systems adjust content difficulty and pace based on individual student performance and learning style' },
+                    { title: 'Automated Grading', desc: 'AI assists teachers by grading assignments and providing detailed feedback, freeing time for personalized instruction' },
+                    { title: 'Accessibility Tools', desc: 'Speech recognition, translation, and text-to-speech technologies make education accessible to students with disabilities' },
+                    { title: 'Dropout Prevention', desc: 'Predictive analytics identify at-risk students early, enabling timely intervention and support' }
+                ]
+            },
+            business: {
+                title: 'Business Solutions',
+                items: [
+                    { title: 'Customer Insights', desc: 'Analyze customer behavior patterns to predict needs, improve satisfaction, and increase retention rates' },
+                    { title: 'Supply Chain Optimization', desc: 'AI predicts demand, optimizes inventory levels, and identifies potential disruptions before they occur' },
+                    { title: 'Fraud Detection', desc: 'Machine learning identifies suspicious transactions and patterns in real-time, protecting businesses and customers' },
+                    { title: 'Process Automation', desc: 'Robotic process automation handles repetitive tasks, reducing costs and allowing employees to focus on strategic work' }
+                ]
+            }
+        };
+
+        dataTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                dataTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const content = contentData[tab.dataset.content];
+                dataContent.innerHTML = `
+                    <h3>${content.title}</h3>
+                    <p style="margin-bottom: 20px;">AI is transforming this field:</p>
+                    <ul style="list-style: none; padding: 0;">
+                        ${content.items.map((item, i) => `
+                            <li style="padding: 15px 0; border-bottom: ${i < content.items.length - 1 ? '1px solid rgba(56, 189, 248, 0.2)' : 'none'};">
+                                <strong>${item.title}:</strong> ${item.desc}
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
